@@ -8,7 +8,10 @@
 #include <QJSValue>
 #include <QDateTime>
 #include <qqmlintegration.h>
+
+#if CAELESTIA_HAS_NETWORKMANAGER
 #include <NetworkManagerQt/Device>
+#endif
 
 namespace caelestia::services {
 
@@ -197,9 +200,13 @@ private slots:
     void onNetworkDevicesChanged();
     void onActiveConnectionsChanged();
     void onConnectionsChanged();
+#if CAELESTIA_HAS_NETWORKMANAGER
     void onDeviceStateChanged(NetworkManager::Device::State newState,
                               NetworkManager::Device::State oldState,
                               NetworkManager::Device::StateChangeReason reason);
+#else
+    void onDeviceStateChanged(int newState, int oldState, int reason);
+#endif
     void onScanFinished(const QDateTime& dateTime);
     void onAccessPointAppeared(const QString& apPath);
     void onAccessPointDisappeared(const QString& apPath);

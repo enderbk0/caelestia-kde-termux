@@ -50,7 +50,7 @@ Singleton {
     FileView {
         id: osRelease
 
-        path: "/etc/os-release"
+        path: "/data/data/com.termux/files/usr/etc/os-release"
         onLoaded: {
             const lines = text().split("\n");
 
@@ -85,11 +85,13 @@ Singleton {
 
     FileView {
         path: "/proc/sys/kernel/osrelease"
+        printErrors: false
         onLoaded: root.kernel = text().trim()
     }
 
     FileView {
         path: "/proc/sys/kernel/hostname"
+        printErrors: false
         onLoaded: root.hostname = text().trim()
     }
 
@@ -122,6 +124,7 @@ Singleton {
         id: fileUptime
 
         path: "/proc/uptime"
+        printErrors: false
         onLoaded: {
             const up = parseInt(text().split(" ")[0] ?? 0);
 

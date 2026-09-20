@@ -1,5 +1,7 @@
 #include "sensorslib.hpp"
 
+#if CAELESTIA_HAS_SENSORS
+
 #include <qloggingcategory.h>
 
 #include <sensors/sensors.h>
@@ -169,3 +171,21 @@ std::optional<double> gpuPciAverageTemp() {
 }
 
 } // namespace caelestia::services::sensorslib
+
+#else // !CAELESTIA_HAS_SENSORS
+
+#include <optional>
+
+namespace caelestia::services::sensorslib {
+
+std::optional<double> cpuPackageTemp() {
+    return std::nullopt;
+}
+
+std::optional<double> gpuPciAverageTemp() {
+    return std::nullopt;
+}
+
+} // namespace caelestia::services::sensorslib
+
+#endif // CAELESTIA_HAS_SENSORS

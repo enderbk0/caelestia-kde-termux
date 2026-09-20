@@ -95,9 +95,16 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 
 set(DISTRIBUTOR "Unset" CACHE STRING "Distributor")
 set(ENABLE_MODULES "extras;plugin;shell;m3shapes" CACHE STRING "Modules to build/install")
-set(INSTALL_LIBDIR "usr/lib/caelestia" CACHE STRING "Library install dir")
-set(INSTALL_QMLDIR "usr/lib/qt6/qml" CACHE STRING "QML install dir")
-set(INSTALL_QSCONFDIR "etc/xdg/quickshell/caelestia" CACHE STRING "Quickshell config install dir")
+
+# Termux: use $PREFIX-based paths when TERMUX_PREFIX is set
+if(DEFINED ENV{TERMUX_PREFIX})
+    set(_PREFIX "$ENV{TERMUX_PREFIX}")
+else()
+    set(_PREFIX "/usr")
+endif()
+set(INSTALL_LIBDIR "${_PREFIX}/lib/caelestia" CACHE STRING "Library install dir")
+set(INSTALL_QMLDIR "${_PREFIX}/lib/qt6/qml" CACHE STRING "QML install dir")
+set(INSTALL_QSCONFDIR "${_PREFIX}/etc/xdg/quickshell/caelestia" CACHE STRING "Quickshell config install dir")
 
 add_compile_options(
     -Wall -Wextra -Wpedantic -Wshadow -Wconversion

@@ -35,3 +35,4 @@ cava/
 # is the source language, and the catalog is thousands of empty entries.
 /shell/translations/caelestia_en.ts
 /shell/translations/caelestia_en.qm
+shell/build/

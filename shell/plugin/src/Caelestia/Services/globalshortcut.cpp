@@ -2,7 +2,6 @@
 
 #include "../Config/rootnodes.hpp"
 #include "../Config/generalconfig.hpp"
-#include <KGlobalAccel>
 #include <QCoreApplication>
 #include <QDebug>
 #include <QDir>
@@ -16,6 +15,10 @@
 #include <QStringList>
 #include <QTextStream>
 #include <cstdlib>
+
+#if CAELESTIA_HAS_KGLOBALACCEL
+#include <KGlobalAccel>
+#endif
 
 Q_GLOBAL_STATIC(GlobalShortcutDispatcher, s_dispatcher)
 
@@ -112,7 +115,9 @@ GlobalShortcutDispatcher* GlobalShortcutDispatcher::instance() {
                     }
                     if (!component.isEmpty() && !action.isEmpty()) {
                         qDebug() << "[Caelestia] Crash recovery: restoring shortcut" << action << "for" << component;
+#if CAELESTIA_HAS_KGLOBALACCEL
                         QProcess::startDetached(QStringLiteral("gdbus"), buildRestoreArgs(component, action, keys));
+#endif
 
                         // Populate the collision index so the blinker shows collisions
                         // even though no GlobalShortcut instances have been created yet.
@@ -235,7 +240,9 @@ GlobalShortcut::~GlobalShortcut() {
 
     // Restore any KDE shortcuts we stole on startup
     for (const auto& stolen : m_stolenShortcuts) {
+#if CAELESTIA_HAS_KGLOBALACCEL
         QProcess::startDetached(QStringLiteral("gdbus"), buildRestoreArgs(stolen.component, stolen.action, stolen.keys));
+#endif
     }
 
     // Re-persist so the recovery file and collision index reflect the restored
@@ -424,7 +431,9 @@ void GlobalShortcut::updateShortcut() {
     if (newSeqs.isEmpty()) {
         // All keys cleared — no binding needed; stolen set is already cleaned above
         persistStolenShortcuts();
+#if CAELESTIA_HAS_KGLOBALACCEL
         KGlobalAccel::self()->removeAllShortcuts(m_action);
+#endif
         return;
     }
 
@@ -432,7 +441,9 @@ void GlobalShortcut::updateShortcut() {
         // No new keys — only description changed or keys were removed.
         // Just rebind with the surviving sequences.
         persistStolenShortcuts();
+#if CAELESTIA_HAS_KGLOBALACCEL
         KGlobalAccel::self()->setShortcut(m_action, newSeqs, KGlobalAccel::NoAutoloading);
+#endif
         return;
     }
 
@@ -440,6 +451,7 @@ void GlobalShortcut::updateShortcut() {
     QList<QStringList> stealCmds;
 
     for (const QKeySequence& seq : addedSeqs) {
+#if CAELESTIA_HAS_KGLOBALACCEL
         const QList<KGlobalShortcutInfo> conflicts = KGlobalAccel::globalShortcutsByKey(seq);
         for (const auto& info : conflicts) {
             if (info.componentUniqueName() == "caelestia" ||
@@ -475,13 +487,16 @@ void GlobalShortcut::updateShortcut() {
                 QStringLiteral("4")
             });
         }
+#endif
     }
 
     // Persist after all steals for this round are computed
     persistStolenShortcuts();
 
     if (stealCmds.isEmpty()) {
+#if CAELESTIA_HAS_KGLOBALACCEL
         KGlobalAccel::self()->setShortcut(m_action, newSeqs, KGlobalAccel::NoAutoloading);
+#endif
         return;
     }
 
@@ -493,7 +508,9 @@ void GlobalShortcut::updateShortcut() {
             proc->deleteLater();
             if (pending->fetchAndSubRelaxed(1) == 1) {
                 if (m_registerGeneration == myGeneration) {
+#if CAELESTIA_HAS_KGLOBALACCEL
                     KGlobalAccel::self()->setShortcut(m_action, newSeqs, KGlobalAccel::NoAutoloading);
+#endif
                 }
             }
         });

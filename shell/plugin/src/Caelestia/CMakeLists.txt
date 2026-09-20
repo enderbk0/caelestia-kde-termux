@@ -12,7 +12,7 @@ qml_module(caelestia-core
         Qt::Quick
         Qt::Concurrent
         Qt::Sql
-        PkgConfig::Qalculate
+        ${QCALCULATE_LIBRARIES}
         KF6::WindowSystem
         KF6::GuiAddons
         caelestia-util
@@ -29,6 +29,11 @@ target_compile_definitions(caelestia-core PRIVATE CAELESTIA_TRANSLATIONS_DIR="${
 
 # Bake the shell version in so CUtils can expose it without spawning a process
 target_compile_definitions(caelestia-core PRIVATE CAELESTIA_VERSION="${DISPLAY_VERSION}")
+
+# Qalculate availability
+if(Qalculate_FOUND)
+    target_compile_definitions(caelestia-core PRIVATE CAELESTIA_HAS_QCALCULATE=1)
+endif()
 
 # Node macros expand to Q_OBJECT, automoc can't see it otherwise
 list(APPEND CMAKE_AUTOMOC_MACRO_NAMES

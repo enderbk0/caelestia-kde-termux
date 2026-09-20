@@ -2,46 +2,119 @@
 
 <img src="assets/logo.svg" width="64" alt="Caelestia logo" />
 
-# caelestia-kde
+# caelestia-kde — Termux
 
-[![Arch Linux](https://img.shields.io/badge/Arch_Linux-1793d1?logo=arch-linux&logoColor=white&style=for-the-badge&labelColor=101418)](https://archlinux.org)
-[![Fedora](https://img.shields.io/badge/Fedora-51A2DA?logo=fedora&logoColor=white&style=for-the-badge&labelColor=101418)](https://fedoraproject.org)
-[![Ubuntu](https://img.shields.io/badge/Ubuntu-E95420?logo=ubuntu&logoColor=white&style=for-the-badge&labelColor=101418)](https://ubuntu.com)
 [![KDE Plasma](https://img.shields.io/badge/Plasma_6-1D99F3?logo=kde&logoColor=white&style=for-the-badge&labelColor=101418)](https://kde.org/plasma-desktop)
 [![License: GPL-3.0-or-later](https://img.shields.io/badge/License-GPL--3.0--or--later-9bd0cc?style=for-the-badge&labelColor=101418)](LICENSE)
 
 </div>
 
-<!-- markdownlint-disable-next-line MD034 -- a bare URL is what GitHub turns into an inline video player -->
-https://github.com/user-attachments/assets/4c3e20c9-5050-4cc8-8e9c-32fd0594ac8b
+> [!WARNING]
+> **Termux-only, experimental, unstable.** This branch runs Caelestia KDE on Android via Termux (no root) + Anland. Expect glitches, visual artifacts, and a noisy log. Not a daily driver.
 
 > [!NOTE]
 > This repo is the KDE Plasma port of [`caelestia-dots/shell`](https://github.com/caelestia-dots/shell).
 > Upstream runs on Hyprland; the port runs the same shell on KWin and Plasma. For the original
 > Hyprland dotfiles, see [`caelestia-dots/caelestia`](https://github.com/caelestia-dots/caelestia).
 
-## Installation
+## What works / what doesn't
 
-**Requirements:** Arch-based, Fedora, or Debian/Ubuntu - KDE Plasma 6 on Wayland
+**Works:** shell launches, bar / drawers / dashboard, KWin workspace tracking (KDE bridge), audio (PipeWire + PulseAudio via Anland), GStreamer multimedia, window screencast (`zkde_screencast_unstable_v1`), crash-recovery shortcuts.
+
+**Disabled on Termux (no root / no system services):** lock screen, KWin workspace-tracker effect, SDDM theme, polkit agent, audio visualiser (`libcava`/`aubio`), hardware sensors (`lm_sensors`), `kde-material-you-colors`.
+
+**Noisy warnings — safe to ignore:**
+- `darkly` decoration / plasma theme not found — falls back to Breeze
+- `kameleon` kded module missing — cosmetic
+- `Fontconfig: /etc/fonts/fonts.conf` not found — Termux keeps it at `$PREFIX/etc/fonts/fonts.conf`, overridden via `FONTCONFIG_FILE`
+- `QSettings organizationName` — Quickshell `Settings` type limitation
+- `CavaProvider is not a type` — visualiser disabled
+- `inotify_add_watch Permission denied` — Android SELinux
+- `load glyph failed err=6` — 2 Material Symbols codepoints, cosmetic
+- `/proc/uptime`, `/proc/sys/kernel/*`, `/etc/os-release` — restricted on Android, handled gracefully
+- `xdg-desktop-portal` / `org.freedesktop.portal.Error.Failed` — Android portal restrictions
+
+## Prerequisites
+
+1. [Termux](https://f-droid.org/packages/com.termux/) from F-Droid (not Play Store).
+2. Enable the X11 repo:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/ladybug-me/caelestia-kde/main/install.sh | sh
+pkg install x11-repo
+pkg update
 ```
 
-### Updating
-
-- **Installer TUI:** run the installer and choose *Update*
-- **GUI:** Nexus -> Updates -> select branch -> Install Updates
-- **CLI:** `bash update.sh` and choose `main` (stable) or `dev` (bleeding edge)
-
-Shell settings are preserved across updates.
-
-### Uninstalling
-
-Choose *Uninstall* from the installer TUI, or run:
+3. Install KDE Plasma + Anland compositor via [lfdevs/anland-termux](https://github.com/lfdevs/anland-termux):
 
 ```bash
-bash ./uninstall.sh
+# Follow anland-termux's own install instructions.
+# It provides: kwin_wayland, plasmashell, startplasma-anland.sh, PipeWire, etc.
+```
+
+Verify:
+
+```bash
+ls ~/startplasma-anland.sh
+```
+
+## Installation (Termux only)
+
+```bash
+pkg install git
+git clone https://github.com/enderbk0/caelestia-kde-termux
+cd caelestia-kde-termux
+bash install-termux.sh
+```
+
+`install-termux.sh` is the **only** installer for Termux. Do not use `install.sh` / `scripts/` — those target desktop Linux.
+
+What it does (all inside `$PREFIX` / `$HOME`, no root):
+- installs Termux packages: `qt6-*`, `kf6-*`, `quickshell`, `pipewire`, `pulseaudio`, `ttf-jetbrains-mono`, `ttf-nerd-fonts-symbols`, downloads Material Symbols Rounded + Rubik, runs `fc-cache`
+- builds the C++ QML plugin (`shell/plugin`) with `-DANDROID=OFF -DCMAKE_SYSTEM_NAME=Linux` — `aubio`/`libcava`/`lm_sensors`/`KGlobalAccel` are optional with stubs
+- installs QML modules to `~/.local/lib/qt6/qml` and shell config to `~/.config/quickshell/caelestia`
+- deploys the monochrome icon set, creates default `~/.local/state/caelestia/scheme.json`
+- writes `~/.local/bin/caelestia-autostart.sh` + KDE autostart entry `~/.config/autostart/caelestiashell.desktop` (inherits `WAYLAND_DISPLAY` / `XDG_RUNTIME_DIR` / PipeWire env from `startplasma-anland.sh`)
+
+Flags:
+
+```bash
+bash install-termux.sh --force-build   # force rebuild
+bash install-termux.sh --skip-config   # skip KDE config deployment
+```
+
+Logs: `$TMPDIR/caelestia-*.log` (cmake/build/install), plus `$TMPDIR/run/quickshell/by-id/*/log.qslog`.
+
+## Running
+
+```bash
+~/startplasma-anland.sh
+# "Starting KDE Plasma. Please switch to the Anland Termux app." → switch to the Anland viewer app
+```
+
+The shell autostarts via `caelestiashell.desktop` → `caelestia-autostart.sh` → `quickshell`. Do not override `WAYLAND_DISPLAY` / `XDG_RUNTIME_DIR` / `PIPEWIRE_RUNTIME_DIR` — they are set by `startplasma-anland.sh`.
+
+Manual launch (inside an Anland session only):
+
+```bash
+~/.local/bin/caelestia-shell
+```
+
+View logs:
+
+```bash
+cat "$TMPDIR/run/quickshell/by-id/"*/log.qslog | tail -n 100
+```
+
+## Updating / Uninstalling
+
+Updating: re-run `bash install-termux.sh` (or `bash install-termux.sh --force-build`). Shell settings at `~/.config/caelestia/shell.json` are preserved.
+
+Uninstall:
+
+```bash
+rm ~/.config/autostart/caelestiashell.desktop
+rm -rf ~/.config/quickshell/caelestia ~/.local/state/caelestia
+# optionally: rm ~/.local/bin/caelestia-autostart.sh ~/.local/bin/caelestia-shell
 ```
 
 ## Keybinds
@@ -66,14 +139,13 @@ bash ./uninstall.sh
 
 Open Nexus (`Super`, then `>Settings`).
 
-- Appearance: wallpaper, colors, fonts, and the wallpaper slideshow
-- Panels: every bar element, dashboard, launcher, sidebar and overview
-- Desktop: window rules, the context menu, Krohnkite
-- Shortcuts: rebind any built-in shortcut, or add a command shortcut
-- Plugins: browse the store, or install a plugin you built yourself
+- Appearance: wallpaper, colors, fonts, slideshow
+- Panels: bar, dashboard, launcher, sidebar, overview
+- Desktop: window rules, context menu, Krohnkite
+- Shortcuts: rebind or add command shortcuts
+- Plugins: browse the store or install your own
 
-Set the wallpaper from Appearance. The stock KDE wallpaper manager does not drive
-the color scheme, so using it leaves the shell on stale colors.
+Set wallpaper from Appearance. The stock KDE wallpaper manager leaves the shell on stale colors.
 
 Settings are written to `~/.config/caelestia/shell.json`.
 
@@ -81,49 +153,49 @@ Settings are written to `~/.config/caelestia/shell.json`.
 
 | Problem | Fix |
 | --- | --- |
-| Widgets not appearing | Log out and back in, or run `caelestia shell -d` |
-| Colors not applying | Run `systemctl --user status kde-material-you-colors.service`, then re-run the installer |
-| Install failed mid-way | Re-run `bash ./scripts/setup.sh` |
-| Full reset needed | See [TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) |
+| Widgets not appearing | Log out and back in, or run `~/.local/bin/caelestia-shell` inside the Anland session |
+| Colors not applying | Re-run `bash install-termux.sh`; verify `~/.local/state/caelestia/scheme.json` exists |
+| Install failed mid-way | Check `$TMPDIR/caelestia-*.log`, then re-run `bash install-termux.sh --force-build` |
+| Shell won't start (`WAYLAND_DISPLAY` missing) | Start via `~/startplasma-anland.sh` first; don't launch outside Anland |
+| Icons show as boxes | `fc-cache -f` and verify `fc-match "Material Symbols Rounded"` returns the font |
 
-For detailed logs, enable Debug Mode in Nexus -> About -> Advanced, then run
-`caelestia shell -l`. Bug reports and questions go to
-[GitHub Issues](https://github.com/ladybug-me/caelestia-kde/issues).
+Check quickshell logs at `$TMPDIR/run/quickshell/by-id/*/log.qslog`. Enable Debug Mode in Nexus → About → Advanced, then reproduce.
+
+No issue tracker — this is an experimental port.
 
 ## Repository layout
 
 ```
-installer/     TUI installer and the per-distro package lists
-  tui/         C++ TUI source and its CMakeLists
-  data/        menu.json, theme.json, tui.version
-  distro/      per-distro package installation (arch, debian, fedora)
-scripts/       install/update pipeline: the numbered steps and their shared lib/
-src/           files copied onto the system, plus the vendored submodules
-shell/         the QML shell and its C++ QML plugin
-docs/          guides, plus design notes under docs/architecture/
-tests/         bash tests for the step-script helpers
-tools/         repo maintenance scripts, never shipped
-assets/        the logo and screenshots used by the docs
-.github/       workflows, issue and PR templates, CI checks
+install-termux.sh  Termux/Android installer (no root, $PREFIX only)
+shell/             QML shell and C++ QML plugin (Termux-patched for optional deps)
+src/               files copied onto the system, plus vendored submodules
+assets/            logo used by the docs
+docs/              guides, plus design notes under docs/architecture/
 ```
 
-<a href="https://www.star-history.com/?repos=ladybug-me%2Fcaelestia-kde&type=date&legend=top-left">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=ladybug-me/caelestia-kde&type=date&theme=dark&legend=top-left&sealed_token=NFI4jXcoZAI26MlGX2jEasHMRd1PIS09clm_CVDS7SFGajH3wiHlN72P8WzuOQT2k2F71ZOCGl_xoy8eVpWlWtA0ACY3koK0NIS1-vLecN0vbvYgrZDN9kp8sQn7NT2xPNeilgrmzYWTzgdQYgskaDMGophAKmy6r6LUfQj8iFjy-Gunuqnte3EY14fX" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=ladybug-me/caelestia-kde&type=date&legend=top-left&sealed_token=NFI4jXcoZAI26MlGX2jEasHMRd1PIS09clm_CVDS7SFGajH3wiHlN72P8WzuOQT2k2F71ZOCGl_xoy8eVpWlWtA0ACY3koK0NIS1-vLecN0vbvYgrZDN9kp8sQn7NT2xPNeilgrmzYWTzgdQYgskaDMGophAKmy6r6LUfQj8iFjy-Gunuqnte3EY14fX" />
-   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=ladybug-me/caelestia-kde&type=date&legend=top-left&sealed_token=NFI4jXcoZAI26MlGX2jEasHMRd1PIS09clm_CVDS7SFGajH3wiHlN72P8WzuOQT2k2F71ZOCGl_xoy8eVpWlWtA0ACY3koK0NIS1-vLecN0vbvYgrZDN9kp8sQn7NT2xPNeilgrmzYWTzgdQYgskaDMGophAKmy6r6LUfQj8iFjy-Gunuqnte3EY14fX" />
- </picture>
-</a>
+Desktop install pipeline (`install.sh`, `installer/`, `scripts/`) is not used on Termux.
 
 ## Credits
 
-- [caelestia-dots/shell](https://github.com/caelestia-dots/shell) and the [Caelestia dotfiles](https://github.com/caelestia-dots/caelestia) by [@soramanew](https://github.com/soramanew) - the design language, shell and dotfiles this port is built on
-- [ladybug-me](https://github.com/ladybug-me) - KDE port lead
-- [0xSolanaceae](https://github.com/0xSolanaceae) - Head maintainer
-- [Bali10050](https://github.com/Bali10050/Darkly) - Darkly Qt
-- [wrymt](https://github.com/wrymt/darkly-gtk) - Darkly GTK
-- [Haidir](https://bitbucket.org/dirn-typo/yet-another-monochrome-icon-set) - icon set
+- [caelestia-dots/shell](https://github.com/caelestia-dots/shell) (GPL-3.0-or-later) and the [Caelestia dotfiles](https://github.com/caelestia-dots/caelestia) (GPL-3.0-or-later) by [@soramanew](https://github.com/soramanew) — original design language, shell and dotfiles this port is built on
+- [ladybug-me/caelestia-kde](https://github.com/ladybug-me/caelestia-kde) (GPL-3.0-or-later) — KDE Plasma port of the Caelestia shell; Termux branch is derived from this port
+- [0xSolanaceae](https://github.com/0xSolanaceae) — head maintainer of the KDE port
+- [Bali10050/Darkly](https://github.com/Bali10050/Darkly) (GPL-2.0-or-later) — Darkly Qt style / KWin decoration
+- [wrymt/darkly-gtk](https://github.com/wrymt/darkly-gtk) (GPL-3.0-or-later) — Darkly GTK theme
+- [Haidir / yet-another-monochrome-icon-set](https://bitbucket.org/dirn-typo/yet-another-monochrome-icon-set) (GPL-3.0-or-later) — monochrome icon set (`src/yet-another-monochrome-icon-set`, deployed to `~/.config/quickshell/caelestia/assets/icons/`)
+- [lfdevs/anland-termux](https://github.com/lfdevs/anland-termux) — Anland Wayland compositor and Termux KDE Plasma session (`startplasma-anland.sh`, PipeWire setup, `XDG_RUNTIME_DIR` handling)
+- [Quickshell](https://quickshell.org) (GPL-3.0-or-later) — QML shell toolkit
+- [Termux](https://termux.dev) — Android terminal and `$PREFIX` environment
+- [enderbk0/caelestia-kde-termux](https://github.com/enderbk0/caelestia-kde-termux) — Termux-specific patches and `install-termux.sh` (optional deps, stubs, Termux paths)
+
+If you redistribute this Termux port, preserve the copyright notices above and comply with each component's license.
 
 ## License
 
-GPL-3.0-or-later - see [LICENSE](LICENSE).
+This Termux port is licensed under **GPL-3.0-or-later**, same as upstream — see [LICENSE](LICENSE).
+
+- `LICENSE` covers this port and the KDE port it derives from.
+- Vendored / deployed third-party assets keep their own licenses:
+  - `src/yet-another-monochrome-icon-set` — GPL-3.0-or-later
+  - Darkly (`Bali10050/Darkly`, `wrymt/darkly-gtk`) — GPL-2.0-or-later / GPL-3.0-or-later respectively
+  - Upstream shell assets from `caelestia-dots/shell` — GPL-3.0-or-later

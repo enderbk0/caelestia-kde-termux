@@ -73,4 +73,20 @@ bool IUtils::isVideo(const QString& path) {
     return videoExtensions.contains(suffix);
 }
 
+QUrl IUtils::animatedUrlForPath(const QString& path) {
+    if (path.isEmpty())
+        return QUrl();
+
+    const QString suffix = QFileInfo(path).suffix().toLower();
+    if (suffix == QStringLiteral("gif") || isVideo(path)) {
+        QUrl url;
+        url.setScheme(QStringLiteral("image"));
+        url.setHost(QStringLiteral("fcache"));
+        url.setPath(path.startsWith(QLatin1Char('/')) ? path : QLatin1Char('/') + path);
+        return url;
+    }
+
+    return urlForPath(path, 2);
+}
+
 } // namespace caelestia::images

@@ -57,8 +57,9 @@ Variants {
                     hideSource: true
                 }
                 property real videoRatio: {
-                    if (badAppleMaskSource.videoOutput.sourceRect.height > 0)
-                        return badAppleMaskSource.videoOutput.sourceRect.width / badAppleMaskSource.videoOutput.sourceRect.height;
+                    const vo = badAppleMaskSource.videoOutput;
+                    if (vo && vo.sourceRect && vo.sourceRect.height > 0)
+                        return vo.sourceRect.width / vo.sourceRect.height;
                     return 16.0 / 9.0;
                 }
                 property real screenRatio: root.width / root.height

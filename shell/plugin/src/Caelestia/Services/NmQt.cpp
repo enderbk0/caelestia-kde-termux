@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-only
 #include "NmQt.hpp"
 
+#if CAELESTIA_HAS_NETWORKMANAGER
+
 #include <NetworkManagerQt/AccessPoint>
 #include <NetworkManagerQt/ActiveConnection>
 #include <NetworkManagerQt/Connection>
@@ -1550,4 +1552,76 @@ void NmQt::invokeCallback(
     callback.call({ result });
 }
 
+#else // !CAELESTIA_HAS_NETWORKMANAGER
+
+#include <QJSEngine>
+
+Q_LOGGING_CATEGORY(lcNmQt, "caelestia.services.nmqt", QtInfoMsg)
+
+namespace caelestia::services {
+
+NmQt::NmQt(QObject* parent) : QObject(parent) {}
+NmQt::~NmQt() = default;
+
+bool NmQt::isConnected() const { return false; }
+bool NmQt::wifiEnabled() const { return false; }
+bool NmQt::scanning() const { return false; }
+QString NmQt::connectingSsid() const { return {}; }
+QVariantList NmQt::networks() const { return {}; }
+QVariantMap NmQt::active() const { return {}; }
+QStringList NmQt::savedConnections() const { return {}; }
+QStringList NmQt::savedConnectionSsids() const { return {}; }
+QVariantMap NmQt::activeEthernet() const { return {}; }
+QVariantList NmQt::ethernetDevices() const { return {}; }
+QVariantList NmQt::vpnConnections() const { return {}; }
+QVariantMap NmQt::activeVpn() const { return {}; }
+QString NmQt::vpnPendingConnection() const { return {}; }
+QVariantMap NmQt::wirelessDeviceDetails() const { return {}; }
+QVariantMap NmQt::ethernetDeviceDetails() const { return {}; }
+QVariantMap NmQt::savedConnectionSecurity() const { return {}; }
+
+void NmQt::getNetworks(QJSValue) {}
+void NmQt::connectToNetwork(const QString&, const QString&, const QString&, QJSValue) {}
+void NmQt::connectToNetworkWithPasswordCheck(const QString&, bool, QJSValue, const QString&) {}
+void NmQt::disconnectFromNetwork() {}
+void NmQt::forgetNetwork(const QString&, QJSValue) {}
+void NmQt::enableWifi(bool, QJSValue) {}
+void NmQt::toggleWifi(QJSValue) {}
+void NmQt::rescanWifi() {}
+void NmQt::connectEthernet(const QString&, const QString&, QJSValue) {}
+void NmQt::disconnectEthernet(const QString&, QJSValue) {}
+void NmQt::connectVpn(const QString&, QJSValue) {}
+void NmQt::disconnectVpn(const QString&, QJSValue) {}
+void NmQt::loadSavedConnections(QJSValue) {}
+void NmQt::loadVpnConnections(QJSValue) {}
+bool NmQt::hasSavedProfile(const QString&) const { return false; }
+void NmQt::getWirelessDeviceDetails(const QString&, QJSValue) {}
+void NmQt::getEthernetDeviceDetails(const QString&, QJSValue) {}
+void NmQt::getIpv4Config(const QString&, QJSValue) {}
+void NmQt::setIpv4Config(const QString&, const QVariantMap&, QJSValue) {}
+void NmQt::setAutoconnect(const QString&, bool, QJSValue) {}
+void NmQt::addHiddenNetwork(const QString&, const QString&, const QString&, bool, QJSValue) {}
+QString NmQt::ethernetSpeed(const QString&) const { return {}; }
+QString NmQt::ethernetDataUsage(const QString&) const { return {}; }
+
+void NmQt::onWirelessEnabledChanged(bool) {}
+void NmQt::onWirelessHardwareEnabledChanged(bool) {}
+void NmQt::onNetworkDevicesChanged() {}
+void NmQt::onActiveConnectionsChanged() {}
+void NmQt::onConnectionsChanged() {}
+void NmQt::onDeviceStateChanged(int, int, int) {}
+void NmQt::onScanFinished(const QDateTime&) {}
+void NmQt::onAccessPointAppeared(const QString&) {}
+void NmQt::onAccessPointDisappeared(const QString&) {}
+void NmQt::onNetworkManagerReady() {}
+void NmQt::refreshNetworks() {}
+void NmQt::refreshDevices() {}
+void NmQt::refreshEthernetDevices() {}
+void NmQt::refreshSavedConnections() {}
+void NmQt::refreshVpnConnections() {}
+void NmQt::refreshWirelessDeviceDetails(const QString&) {}
+void NmQt::refreshEthernetDeviceDetails(const QString&) {}
+
 } // namespace caelestia::services
+
+#endif // CAELESTIA_HAS_NETWORKMANAGER

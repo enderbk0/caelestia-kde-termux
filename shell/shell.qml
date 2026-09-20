@@ -14,8 +14,8 @@ import "modules"
 import "modules/drawers"
 import "modules/background"
 import "modules/areapicker"
-import "modules/lock"
-import "modules/polkit"
+// import "modules/lock"
+// import "modules/polkit"
 import "modules/screenshot/regionSelector"
 import "modules/overview"
 import "modules/whatsnew" as WhatsNew
@@ -83,9 +83,9 @@ ShellRoot {
 
     Drawers {}
     // AreaPicker {}
-    Lock {
-        id: lock
-    }
+    // Lock {
+    //     id: lock
+    // }
     // PolkitModule {}
 
     property var regionSelector: RegionSelector {}
@@ -185,7 +185,7 @@ ShellRoot {
 
     BatteryMonitor {}
     IdleMonitors {
-        lock: lock
+        // lock: lock
     }
     BluetoothReconnect {}
 

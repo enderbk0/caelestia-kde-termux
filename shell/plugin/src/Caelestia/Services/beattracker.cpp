@@ -1,9 +1,11 @@
 #include "beattracker.hpp"
 
-#include <aubio/aubio.h>
-
 #include "audiocollector.hpp"
 #include "audioprovider.hpp"
+
+#if CAELESTIA_HAS_AUBIO
+
+#include <aubio/aubio.h>
 
 namespace caelestia::services {
 
@@ -38,20 +40,39 @@ void BeatProcessor::process() {
     }
 }
 
+} // namespace caelestia::services
+
+#else // !CAELESTIA_HAS_AUBIO
+
+namespace caelestia::services {
+
+BeatProcessor::BeatProcessor(QObject* parent)
+    : AudioProcessor(parent) {}
+
+BeatProcessor::~BeatProcessor() = default;
+
+void BeatProcessor::process() {}
+
+} // namespace caelestia::services
+
+#endif // CAELESTIA_HAS_AUBIO
+
+namespace caelestia::services {
+
 BeatTracker::BeatTracker(QObject* parent)
     : AudioProvider(parent)
-    , m_bpm(120) {
+    , m_bpm(0) {
     m_processor = new BeatProcessor();
     init();
 
     connect(static_cast<BeatProcessor*>(m_processor), &BeatProcessor::beat, this, &BeatTracker::updateBpm);
 }
 
-smpl_t BeatTracker::bpm() const {
+float BeatTracker::bpm() const {
     return m_bpm;
 }
 
-void BeatTracker::updateBpm(smpl_t bpm) {
+void BeatTracker::updateBpm(float bpm) {
     if (!qFuzzyCompare(bpm + 1.0f, m_bpm + 1.0f)) {
         m_bpm = bpm;
         emit bpmChanged();
