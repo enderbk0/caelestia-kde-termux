@@ -12,11 +12,6 @@
 > [!WARNING]
 > **Termux-only, experimental, unstable.** This branch runs Caelestia KDE on Android via Termux (no root) + Anland. Expect glitches, visual artifacts, and a noisy log. Not a daily driver.
 
-> [!NOTE]
-> This repo is the KDE Plasma port of [`caelestia-dots/shell`](https://github.com/caelestia-dots/shell).
-> Upstream runs on Hyprland; the port runs the same shell on KWin and Plasma. For the original
-> Hyprland dotfiles, see [`caelestia-dots/caelestia`](https://github.com/caelestia-dots/caelestia).
-
 ## What works / what doesn't
 
 **Works:** shell launches, bar / drawers / dashboard, KWin workspace tracking (KDE bridge), audio (PipeWire + PulseAudio via Anland), GStreamer multimedia, window screencast (`zkde_screencast_unstable_v1`), crash-recovery shortcuts.
